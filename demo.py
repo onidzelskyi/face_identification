@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import sys
 import math
+import argparse # Arguments parser
+import os.path # check if file exists
 
 
 INTERPOLATION = cv2.INTER_CUBIC
@@ -14,32 +16,44 @@ SINGLE_IMG_GRAY_FACES = "single_faces.jpeg"
 
 
 face_detector = [
-                 cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml'),
-                 cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml'),
-                 cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt2.xml'),
-                 cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt_tree.xml'),
-                 cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_profileface.xml')
+                 cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_default.xml"),
+                 cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml"),
+                 cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt2.xml"),
+                 cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt_tree.xml"),
+                 cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_profileface.xml")
                  ]
 
 
 eye_detector = [
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_eye.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_lefteye_2splits.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_eyepair_big.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_eyepair_small.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_righteye.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_righteye_2splits.xml'),
-                cv2.CascadeClassifier('/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_lefteye.xml')
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_eye.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_eye_tree_eyeglasses.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_lefteye_2splits.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_eyepair_big.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_eyepair_small.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_righteye.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_righteye_2splits.xml"),
+                cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_mcs_lefteye.xml")
                 ]
+
+
+##
+# Argument parser
+#
+def parseArgs():
+    parser = argparse.ArgumentParser(description="Parse image files.")
+    parser.add_argument("-g", "--group", required = True, help = "people' group image file")
+    parser.add_argument("-s", "--single", required = True, help = "person' single image file")
+    return parser.parse_args()
 
 
 ##
 # Get images from command line
 #
-def getImgFiles():
-    group_img = sys.argv[1]
-    single_img = sys.argv[2]
+def getImgFiles(args):
+    group_img = args.group
+    single_img = args.single
+    if not os.path.exists(group_img) or not os.path.exists(single_img):
+        raise Exception("File not found.")
     return group_img, single_img
 
 
@@ -171,8 +185,13 @@ def checkEyes(A, I):
 # Main function
 #
 def main():
+    # Parse arguments
+    args = parseArgs()
+    
     # Get images form command line arguments
-    group_img, single_img = getImgFiles()
+    # and check if file exists
+    # Raise excepiton if file not exists
+    group_img, single_img = getImgFiles(args)
 
     # Read images
     G, S = readImages(group_img, single_img)
@@ -340,4 +359,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print e
