@@ -3,11 +3,13 @@ import numpy as np
 import math
 
 
-# Class face recognition
 class FaceRecognition(object):
+    """Class face recognition."""
     
-
-    def __init__(self):
+    ENGINE_GVA = "GVA"
+    ENGINE_CV2 = "CV2"
+    def __init__(self, engine=FaceRecognition.ENGINE_CV2):
+        self.engine = engine
         self.group_img = None
         self.single_img = None
         self.group_img_gray = None
@@ -18,6 +20,20 @@ class FaceRecognition(object):
         self.X = None
         self.X_test = None
         self.target = []
+        
+    def process(self, group, single):
+        """Main entry point"""
+        
+        # Step I. Load images
+        self.loadImage(group)
+        self.loadImage(single, group=False)
+        
+        # Step II. Detect faces
+        if self.engine == ENGINE_GVA:
+            pass
+        else:
+            self.detectFaces()
+            self.detectFaces(group=False)
         
     # load image
     def loadImage(self, file_name, group=True):
