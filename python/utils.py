@@ -1,6 +1,16 @@
-import cv2
+#import cv2
 import numpy as np
 import math
+from PIL import Image
+
+
+class ImageObj(object):
+    """Image object with faces."""
+    def __init__(self, file_name, img_rgb=None, img_gray=None, faces=None):
+        self.file_name = file_name
+        self.img_rgb = img_rgb
+        self.img_gray = img_gray
+        self.faces = faces
 
 
 class FaceRecognition(object):
@@ -8,43 +18,41 @@ class FaceRecognition(object):
     
     ENGINE_GVA = "GVA"
     ENGINE_CV2 = "CV2"
-    def __init__(self, engine=FaceRecognition.ENGINE_CV2):
+
+    # OpenCV
+    face_detector = cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml")
+    scale_factor = 1.3
+    min_neighbors = 5
+    max_results = 16
+
+    def __init__(self, engine=FaceRecognition.ENGINE_GVA):
+        # Engine
         self.engine = engine
-        self.group_img = None
-        self.single_img = None
-        self.group_img_gray = None
-        self.single_img_gray = None
-        self.scale_factor = 1.3
-        self.min_neighbors = 5
-        self.face_detector = cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml")
+        # Images
+        self.group = None
+        self.single = None
+        
         self.X = None
         self.X_test = None
         self.target = []
         
     def process(self, group, single):
         """Main entry point"""
+        # Step I. Init image objects
+        self.group = ImageObj(group)
+        self.single = ImageObj(single)
         
-        # Step I. Load images
-        self.loadImage(group)
-        self.loadImage(single, group=False)
+        self.load_image()
         
         # Step II. Detect faces
-        if self.engine == ENGINE_GVA:
-            pass
-        else:
-            self.detectFaces()
-            self.detectFaces(group=False)
+        self.detect_face()
         
     # load image
-    def loadImage(self, file_name, group=True):
-        img = cv2.imread(file_name)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        if group: 
-            self.group_img = img
-            self.group_img_gray = gray
-        else: 
-            self.single_img = img
-            self.single_img_gray = gray
+    def load_image(self):
+        for (image_file, rgb, gray) in [(self.group_file, self.group_img, self.group_img_gray),
+                                        (self.single_file, self.single_img, self.single_img_gray)]:
+            rgb = Image.open(image_file)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             
     # show image
     def showImage(self, group=True):
@@ -155,4 +163,19 @@ class FaceRecognition(object):
 
         cv2.imwrite("A.jpg", img1)
         cv2.imwrite("B.jpg", img2)
+
+
+    # Google Vision API section
+    def detect_face(self):
+    for (image_content, faces) in [(self.group_img, self.group_faces), (self.single_img, self.single_faces)]:
+        if self.engine == ENGINE_CV2:
+            faces = self.face_detector.detectMultiScale(image_content, scale_factor, min_neighbors)
+        else:
+            batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
+                              'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
+
+            service = get_vision_service()
+            request = service.images().annotate(body={'requests': batch_request,})
+            response = request.execute()
+            faces = response['responses'][0]['faceAnnotations']
 
