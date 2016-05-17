@@ -6,11 +6,10 @@ from PIL import Image
 
 class ImageObj(object):
     """Image object with faces."""
-    def __init__(self, file_name, img_rgb=None, img_gray=None, faces=None):
-        self.file_name = file_name
-        self.img_rgb = img_rgb
-        self.img_gray = img_gray
+    def __init__(self, face_file, faces=False):
         self.faces = faces
+        with open(input_filename, 'rb') as image
+            self.image_content = image.read()
 
 
 class FaceRecognition(object):
@@ -31,22 +30,20 @@ class FaceRecognition(object):
         # Images
         self.group = None
         self.single = None
-        
-        self.X = None
-        self.X_test = None
-        self.target = []
-        
+
     def process(self, group, single):
         """Main entry point"""
         # Step I. Init image objects
         self.group = ImageObj(group)
         self.single = ImageObj(single)
-        
-        self.load_image()
-        
+                
         # Step II. Detect faces
-        self.detect_face()
+        self.detect_faces()
+
+        # Step III. Create matrix
+        self.create_matrix()
         
+    '''
     # load image
     def load_image(self):
         for (image_file, rgb, gray) in [(self.group_file, self.group_img, self.group_img_gray),
@@ -57,7 +54,7 @@ class FaceRecognition(object):
     # show image
     def showImage(self, group=True):
         pass
-    
+    '''
     
     # detect faces
     def detectFaces(self, group=True):
@@ -166,16 +163,13 @@ class FaceRecognition(object):
 
 
     # Google Vision API section
-    def detect_face(self):
-    for (image_content, faces) in [(self.group_img, self.group_faces), (self.single_img, self.single_faces)]:
-        if self.engine == ENGINE_CV2:
-            faces = self.face_detector.detectMultiScale(image_content, scale_factor, min_neighbors)
-        else:
-            batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
-                              'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
+    def detect_faces(self):
+    for (image_content, faces) in [(self.group.image_content, self.group.faces), (self.single.image_content, self.single.faces)]:
+        batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
+                          'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
 
-            service = get_vision_service()
-            request = service.images().annotate(body={'requests': batch_request,})
-            response = request.execute()
-            faces = response['responses'][0]['faceAnnotations']
+        service = get_vision_service()
+        request = service.images().annotate(body={'requests': batch_request,})
+        response = request.execute()
+        faces = response['responses'][0]['faceAnnotations']
 
