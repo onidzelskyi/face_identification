@@ -28,8 +28,8 @@ class FaceRecognition(object):
         # Engine
         self.engine = engine
         # Images
-        self.group = None
-        self.single = None
+        self.group, self.group_matrix = None, None
+        self.single, self.single_matrix = None, None
 
     def process(self, group, single):
         """Main entry point"""
@@ -42,6 +42,9 @@ class FaceRecognition(object):
 
         # Step III. Create matrix
         self.create_matrix()
+
+        # Step IV. Calc dissimilarity
+        self.calc_dissimilarity()
         
     '''
     # load image
@@ -54,8 +57,7 @@ class FaceRecognition(object):
     # show image
     def showImage(self, group=True):
         pass
-    '''
-    
+
     # detect faces
     def detectFaces(self, group=True):
         if group: self.group_faces = self.face_detector.detectMultiScale(self.group_img_gray, self.scale_factor, self.min_neighbors)
@@ -160,16 +162,33 @@ class FaceRecognition(object):
 
         cv2.imwrite("A.jpg", img1)
         cv2.imwrite("B.jpg", img2)
+    '''
 
-
-    # Google Vision API section
     def detect_faces(self):
-    for (image_content, faces) in [(self.group.image_content, self.group.faces), (self.single.image_content, self.single.faces)]:
-        batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
-                          'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
+        '''Google Vision API.'''
+        for (image_content, faces) in [(self.group.image_content, self.group.faces), (self.single.image_content, self.single.faces)]:
+            batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
+                              'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
 
-        service = get_vision_service()
-        request = service.images().annotate(body={'requests': batch_request,})
-        response = request.execute()
-        faces = response['responses'][0]['faceAnnotations']
+            service = get_vision_service()
+            request = service.images().annotate(body={'requests': batch_request,})
+            response = request.execute()
+            faces = response['responses'][0]['faceAnnotations']
 
+    def create_matrix(self):
+        '''Transform faces to matrices.'''
+        import numpy as np
+        for item, matrix in [(self.group.faces, self.group_matrix), (self.single.faces, self.single_matrix)]
+            LL = []
+            for face in item:
+                vertices = face['fdBoundingPoly']['vertices']
+                lll = np.fabs(vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x'])
+                LL.append(lll)
+            # TODO: one from mean, moda, mediana
+            mean_valule = np.average(LL)
+
+            self.group_matrix = np.zeros(shape=(len(self.group.faces), mean_valule))
+            self.single_matrix = np.zeros(shape=(len(self.single.faces), mean_valule))
+
+    def calc_dissimilarity(self):
+        for single in self.single_matrix
