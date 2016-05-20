@@ -30,6 +30,7 @@ class FaceRecognition(object):
         # Images
         self.group, self.group_matrix = None, None
         self.single, self.single_matrix = None, None
+        self.predicted = None
 
     def process(self, group, single):
         """Main entry point"""
@@ -45,6 +46,9 @@ class FaceRecognition(object):
 
         # Step IV. Calc dissimilarity
         self.calc_dissimilarity()
+
+        # Step V. Show result
+        self.show_result()
         
     '''
     # load image
@@ -177,7 +181,6 @@ class FaceRecognition(object):
 
     def create_matrix(self):
         '''Transform faces to matrices.'''
-        import numpy as np
         for item, matrix in [(self.group.faces, self.group_matrix), (self.single.faces, self.single_matrix)]
             LL = []
             for face in item:
@@ -191,4 +194,9 @@ class FaceRecognition(object):
             self.single_matrix = np.zeros(shape=(len(self.single.faces), mean_valule))
 
     def calc_dissimilarity(self):
-        for single in self.single_matrix
+        self.predicted = np.argmin(np.abs(np.sum((self.group_matrix - self.single_matrix), axis=1)))
+
+    def show_result(self):
+        draw = ImageDraw.Draw(self.group)
+        box = (self.group[self.predicted].get('x', 0.0), self.group.faces[self.predicted].get('y', 0.0))
+        draw.line(box + [box[0]], width=5, fill='#00ff00')
