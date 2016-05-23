@@ -1,15 +1,36 @@
 #import cv2
 import numpy as np
-import math
+import os
+import base64
 from PIL import Image
+
+from googleapiclient import discovery
+from oauth2client.client import GoogleCredentials
+
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_cloud_vision.json"
+
+DISCOVERY_URL='https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
+
+
+def get_vision_service():
+    credentials = GoogleCredentials.get_application_default()
+    return discovery.build('vision', 'v1', credentials=credentials,
+                           discoveryServiceUrl=DISCOVERY_URL)
 
 
 class ImageObj(object):
     """Image object with faces."""
-    def __init__(self, face_file, faces=False):
+    def __init__(self, face_file, faces=None):
         self.faces = faces
-        with open(input_filename, 'rb') as image
+        with open(face_file, 'rb') as image:
             self.image_content = image.read()
+
+    def set_faces(self, faces):
+        self.faces = faces
+
+    def get_image_content(self):
+        return self.image_content
 
 
 class FaceRecognition(object):
@@ -19,12 +40,12 @@ class FaceRecognition(object):
     ENGINE_CV2 = "CV2"
 
     # OpenCV
-    face_detector = cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml")
+    #face_detector = cv2.CascadeClassifier("/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt.xml")
     scale_factor = 1.3
     min_neighbors = 5
     max_results = 16
 
-    def __init__(self, engine=FaceRecognition.ENGINE_GVA):
+    def __init__(self, engine=ENGINE_GVA):
         # Engine
         self.engine = engine
         # Images
@@ -170,28 +191,29 @@ class FaceRecognition(object):
 
     def detect_faces(self):
         '''Google Vision API.'''
-        for (image_content, faces) in [(self.group.image_content, self.group.faces), (self.single.image_content, self.single.faces)]:
-            batch_request = [{'image': {'content': base64.b64encode(image_content).decode('UTF-8')},
+        for image_object in [self.group, self.single]:
+            batch_request = [{'image': {'content': base64.b64encode(image_object.get_image_content()).decode('UTF-8')},
                               'features': [{'type': 'FACE_DETECTION', 'maxResults': self.max_results}]}]
 
             service = get_vision_service()
-            request = service.images().annotate(body={'requests': batch_request,})
+            request = service.images().annotate(body={'requests': batch_request})
             response = request.execute()
-            faces = response['responses'][0]['faceAnnotations']
+            image_object.set_faces(response['responses'][0]['faceAnnotations'])
 
     def create_matrix(self):
         '''Transform faces to matrices.'''
-        for item, matrix in [(self.group.faces, self.group_matrix), (self.single.faces, self.single_matrix)]
+        for item, matrix in [(self.group.faces, self.group_matrix), (self.single.faces, self.single_matrix)]:
             LL = []
             for face in item:
                 vertices = face['fdBoundingPoly']['vertices']
                 lll = np.fabs(vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x'])
                 LL.append(lll)
             # TODO: one from mean, moda, mediana
-            mean_valule = np.average(LL)
+            import pdb; pdb.set_trace()
+            mean_value = np.average(LL)
 
-            self.group_matrix = np.zeros(shape=(len(self.group.faces), mean_valule))
-            self.single_matrix = np.zeros(shape=(len(self.single.faces), mean_valule))
+            self.group_matrix = np.zeros(shape=(len(self.group.faces), mean_value))
+            self.single_matrix = np.zeros(shape=(len(self.single.faces), mean_value))
 
     def calc_dissimilarity(self):
         self.predicted = np.argmin(np.abs(np.sum((self.group_matrix - self.single_matrix), axis=1)))
