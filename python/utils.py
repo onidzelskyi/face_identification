@@ -2,7 +2,7 @@
 import numpy as np
 import os
 import base64
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from googleapiclient import discovery
 from oauth2client.client import GoogleCredentials
@@ -22,9 +22,19 @@ def get_vision_service():
 class ImageObj(object):
     """Image object with faces."""
     def __init__(self, face_file, faces=None):
+        # List of detected faces. Face is the dict with the info (e.g. coordinates, etc.)
         self.faces = faces
+        # Image as the binary string. Can be sent to Google vision api
         with open(face_file, 'rb') as image:
             self.image_content = image.read()
+        # Image object
+        self.image = Image.open(face_file)
+        # Image as a matrix
+        self.image_matrix = np.asarray(self.image.convert('L'))
+        # Matrix of unrolled faces in vectors
+        self.faces_matrix = None
+        # List of row faces
+        self.raw_faces = None
 
     def set_faces(self, faces):
         self.faces = faces
@@ -202,23 +212,30 @@ class FaceRecognition(object):
 
     def create_matrix(self):
         '''Transform faces to matrices.'''
-        for item, matrix in [(self.group.faces, self.group_matrix), (self.single.faces, self.single_matrix)]:
-            LL = []
-            for face in item:
+        LL = []
+        for image_object in [self.group, self.single]:
+            #DD = []
+            for face in image_object.faces:
                 vertices = face['fdBoundingPoly']['vertices']
-                lll = np.fabs(vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x'])
+                lll = np.fabs((vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x']))
                 LL.append(lll)
-            # TODO: one from mean, moda, mediana
-            import pdb; pdb.set_trace()
-            mean_value = np.average(LL)
+                #image_object.raw_faces.append(image_object.image_matrix[vertices[0]['y']:vertices[2]['y'], vertices[0]['x']:vertices[1]['x']])
 
-            self.group_matrix = np.zeros(shape=(len(self.group.faces), mean_value))
-            self.single_matrix = np.zeros(shape=(len(self.single.faces), mean_value))
+        # TODO: one from mean, moda, mediana
+        mean_value = np.rint(np.average(LL))
+
+        for image_object in [self.group, self.single]:
+            image_object.faces_matrix = np.zeros(shape=(len(image_object.faces), mean_value))
+            for i in range(len(image_object.faces)):
+                box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
+                image_object.faces_matrix[i] = np.asmatrix(image_object.image.crop(box).resize((int(mean_value), int(mean_value)))).A1
 
     def calc_dissimilarity(self):
-        self.predicted = np.argmin(np.abs(np.sum((self.group_matrix - self.single_matrix), axis=1)))
+        self.predicted = np.argmin(np.abs(np.sum((self.group.faces_matrix - self.single.faces_matrix), axis=1)))
 
     def show_result(self):
-        draw = ImageDraw.Draw(self.group)
-        box = (self.group[self.predicted].get('x', 0.0), self.group.faces[self.predicted].get('y', 0.0))
+        draw = ImageDraw.Draw(self.group.image)
+        box = [(v.get('x', 0.0), v.get('y', 0.0)) for v in self.group.faces[self.predicted]['fdBoundingPoly']['vertices']]
+        #box = (self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('x', 0.0), self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('y', 0.0))
         draw.line(box + [box[0]], width=5, fill='#00ff00')
+        self.group.image.save('test.jpg')
