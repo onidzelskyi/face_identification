@@ -217,7 +217,8 @@ class FaceRecognition(object):
             #DD = []
             for face in image_object.faces:
                 vertices = face['fdBoundingPoly']['vertices']
-                lll = np.fabs((vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x']))
+                #lll = np.fabs((vertices[0]['y'] - vertices[2]['y']) * (vertices[0]['x'] - vertices[1]['x']))
+                lll = np.fabs((vertices[0]['y'] - vertices[2]['y']))
                 LL.append(lll)
                 #image_object.raw_faces.append(image_object.image_matrix[vertices[0]['y']:vertices[2]['y'], vertices[0]['x']:vertices[1]['x']])
 
@@ -225,12 +226,15 @@ class FaceRecognition(object):
         mean_value = np.rint(np.average(LL))
 
         for image_object in [self.group, self.single]:
-            image_object.faces_matrix = np.zeros(shape=(len(image_object.faces), mean_value))
+            image_object.faces_matrix = np.zeros(shape=(len(image_object.faces), int(mean_value**2)))
             for i in range(len(image_object.faces)):
+                vertices =  image_object.faces[i]['fdBoundingPoly']['vertices']
                 box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
-                image_object.faces_matrix[i] = np.asmatrix(image_object.image.crop(box).resize((int(mean_value), int(mean_value)))).A1
+                #import pdb; pdb.set_trace()
+                image_object.faces_matrix[i] = np.asmatrix(image_object.image.crop(box).resize((int(mean_value), int(mean_value))).convert('L')).A1
 
     def calc_dissimilarity(self):
+        #import pdb; pdb.set_trace()
         self.predicted = np.argmin(np.abs(np.sum((self.group.faces_matrix - self.single.faces_matrix), axis=1)))
 
     def show_result(self):
