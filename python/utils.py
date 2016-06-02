@@ -21,7 +21,7 @@ def get_vision_service():
 
 class ImageObj(object):
     """Image object with faces."""
-    def __init__(self, face_file, faces=None):
+    def __init__(self, face_file, faces=None, name='group'):
         # List of detected faces. Face is the dict with the info (e.g. coordinates, etc.)
         self.faces = faces
         # Image as the binary string. Can be sent to Google vision api
@@ -35,12 +35,30 @@ class ImageObj(object):
         self.faces_matrix = None
         # List of row faces
         self.raw_faces = None
+        # Name of image: group or single
+        self.image_name = name
 
     def set_faces(self, faces):
         self.faces = faces
 
     def get_image_content(self):
         return self.image_content
+
+    def debug_faces(self, mean_value):
+        self.faces_matrix = np.zeros(shape=(len(self.faces), int(mean_value ** 2)))
+        for i in range(len(self.faces)):
+            vertices = self.faces[i]['fdBoundingPoly']['vertices']
+            box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
+            original_face = self.image.crop(box)
+            original_face.save('{}_face_{}.jpg'.format(self.image_name, i+1))
+            scaled_face = original_face.resize((int(mean_value), int(mean_value)))
+            scaled_face.save('{}_scaled_face_{}.jpg'.format(self.image_name, i+1))
+            converted_face = scaled_face.convert('L')
+            converted_face.save(('{}_converted_face_{}.jpg'.format(self.image_name, i+1)))
+            rotated_face = converted_face.rotate(self.faces[i]['rollAngle'])
+            rotated_face.save(('{}_aligned_face_{}.jpg'.format(self.image_name, i+1)))
+            #self.faces_matrix[i] = np.asmatrix(converted_face).A1
+            self.faces_matrix[i] = np.asmatrix(rotated_face).A1
 
 
 class FaceRecognition(object):
@@ -66,8 +84,8 @@ class FaceRecognition(object):
     def process(self, group, single):
         """Main entry point"""
         # Step I. Init image objects
-        self.group = ImageObj(group)
-        self.single = ImageObj(single)
+        self.group = ImageObj(group, name='group')
+        self.single = ImageObj(single, name='single')
                 
         # Step II. Detect faces
         self.detect_faces()
@@ -224,18 +242,15 @@ class FaceRecognition(object):
 
         # TODO: one from mean, moda, mediana
         mean_value = np.rint(np.average(LL))
+        # Or use 100 by 100 image
+        mean_value = 100
 
         for image_object in [self.group, self.single]:
-            image_object.faces_matrix = np.zeros(shape=(len(image_object.faces), int(mean_value**2)))
-            for i in range(len(image_object.faces)):
-                vertices =  image_object.faces[i]['fdBoundingPoly']['vertices']
-                box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
-                #import pdb; pdb.set_trace()
-                image_object.faces_matrix[i] = np.asmatrix(image_object.image.crop(box).resize((int(mean_value), int(mean_value))).convert('L')).A1
+            image_object.debug_faces(mean_value)
 
     def calc_dissimilarity(self):
         #import pdb; pdb.set_trace()
-        self.predicted = np.argmin(np.abs(np.sum((self.group.faces_matrix - self.single.faces_matrix), axis=1)))
+        self.predicted = np.argmin(np.linalg.norm(self.group.faces_matrix-self.single.faces_matrix, axis=1))
 
     def show_result(self):
         draw = ImageDraw.Draw(self.group.image)
@@ -243,3 +258,4 @@ class FaceRecognition(object):
         #box = (self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('x', 0.0), self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('y', 0.0))
         draw.line(box + [box[0]], width=5, fill='#00ff00')
         self.group.image.save('test.jpg')
+        #import pdb; pdb.set_trace()
