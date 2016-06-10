@@ -1,7 +1,7 @@
 """Google vision API Face Detection sample."""
 
 import os
-import global
+#import global
 import base64
 import httplib2
 
@@ -11,7 +11,8 @@ from oauth2client.client import GoogleCredentials
 from PIL import Image, ImageDraw
 
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/oleksii/Downloads/Google Cloud Vision-9785cb814b4e.json"
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/home/oleksii/Downloads/Google Cloud Vision-9785cb814b4e.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_cloud_vision.json"
 
 DISCOVERY_URL='https://{api}.googleapis.com/$discovery/rest?version={apiVersion}'
 
@@ -81,6 +82,5 @@ def main(input_filename, output_filename):
         
 
 if __name__ == "__main__":
-    main("/media/sf_host_dev/github/face_identification/test/g7.jpg", \ 
-         "/home/oleksii/Downloads/out.jpg")        
+    main("../test/s8.jpg", "out.jpg")
 

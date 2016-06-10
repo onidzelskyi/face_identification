@@ -15,8 +15,7 @@ DISCOVERY_URL='https://{api}.googleapis.com/$discovery/rest?version={apiVersion}
 
 def get_vision_service():
     credentials = GoogleCredentials.get_application_default()
-    return discovery.build('vision', 'v1', credentials=credentials,
-                           discoveryServiceUrl=DISCOVERY_URL)
+    return discovery.build('vision', 'v1', credentials=credentials, discoveryServiceUrl=DISCOVERY_URL)
 
 
 class ImageObj(object):
@@ -40,6 +39,12 @@ class ImageObj(object):
 
     def set_faces(self, faces):
         self.faces = faces
+
+    def get_number_of_faces(self):
+        return len(self.faces)
+
+    def get_name(self):
+        return self.image_name
 
     def get_image_content(self):
         return self.image_content
@@ -82,23 +87,25 @@ class FaceRecognition(object):
         self.predicted = None
 
     def process(self, group, single):
-        """Main entry point"""
-        # Step I. Init image objects
-        self.group = ImageObj(group, name='group')
-        self.single = ImageObj(single, name='single')
-                
-        # Step II. Detect faces
-        self.detect_faces()
+        try:
+            """Main entry point"""
+            # Step I. Init image objects
+            self.group = ImageObj(group, name='group')
+            self.single = ImageObj(single, name='single')
 
-        # Step III. Create matrix
-        self.create_matrix()
+            # Step II. Detect faces
+            self.detect_faces()
 
-        # Step IV. Calc dissimilarity
-        self.calc_dissimilarity()
+            # Step III. Create matrix
+            self.create_matrix()
 
-        # Step V. Show result
-        self.show_result()
-        
+            # Step IV. Calc dissimilarity
+            self.calc_dissimilarity()
+
+            # Step V. Show result
+            self.show_result()
+        except ValueError as err:
+            print(err)
     '''
     # load image
     def load_image(self):
@@ -206,7 +213,7 @@ class FaceRecognition(object):
             den = (I+b[0])
             d = np.sum(nom[den!=0.]/den[den!=0.])
             print d,
-            if not D or D > d: 
+            if not D or D > d: S
                 D = d
                 idx = i
         print "Best candidate: ", idx
@@ -226,7 +233,12 @@ class FaceRecognition(object):
             service = get_vision_service()
             request = service.images().annotate(body={'requests': batch_request})
             response = request.execute()
+
+            if len(response['responses'][0]) == 0:
+                raise ValueError('No faces were detected in {}. Exit.'.format(image_object.get_name()))
+
             image_object.set_faces(response['responses'][0]['faceAnnotations'])
+            print('{}: {} faces'.format(image_object.get_name(), image_object.get_number_of_faces()))
 
     def create_matrix(self):
         '''Transform faces to matrices.'''

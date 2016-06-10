@@ -3,4 +3,4 @@
 from utils import FaceRecognition
 
 fr = FaceRecognition()
-fr.process('../test/g3.jpg', '../test/s3.jpg')
+fr.process('../test/g7.jpg', '../test/s7.jpg')
