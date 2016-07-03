@@ -55,13 +55,13 @@ class ImageObj(object):
             vertices = self.faces[i]['fdBoundingPoly']['vertices']
             box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
             original_face = self.image.crop(box)
-            original_face.save('{}_face_{}.jpg'.format(self.image_name, i+1))
+            #original_face.save('{}_face_{}.jpg'.format(self.image_name, i+1))
             scaled_face = original_face.resize((int(mean_value), int(mean_value)))
-            scaled_face.save('{}_scaled_face_{}.jpg'.format(self.image_name, i+1))
+            #scaled_face.save('{}_scaled_face_{}.jpg'.format(self.image_name, i+1))
             converted_face = scaled_face.convert('L')
-            converted_face.save(('{}_converted_face_{}.jpg'.format(self.image_name, i+1)))
+            #converted_face.save(('{}_converted_face_{}.jpg'.format(self.image_name, i+1)))
             rotated_face = converted_face.rotate(self.faces[i]['rollAngle'])
-            rotated_face.save(('{}_aligned_face_{}.jpg'.format(self.image_name, i+1)))
+            #rotated_face.save(('{}_aligned_face_{}.jpg'.format(self.image_name, i+1)))
             #self.faces_matrix[i] = np.asmatrix(converted_face).A1
             self.faces_matrix[i] = np.asmatrix(rotated_face).A1
 
@@ -269,5 +269,11 @@ class FaceRecognition(object):
         box = [(v.get('x', 0.0), v.get('y', 0.0)) for v in self.group.faces[self.predicted]['fdBoundingPoly']['vertices']]
         #box = (self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('x', 0.0), self.group.faces[self.predicted]['fdBoundingPoly']['vertices'].get('y', 0.0))
         draw.line(box + [box[0]], width=5, fill='#00ff00')
+        
+        # Resize imgage before saving to display on web page
+        #import pdb; pdb.set_trace()
+        self.group.image.thumbnail((400, 400))
+
         self.group.image.save('test.jpg')
+
         #import pdb; pdb.set_trace()
