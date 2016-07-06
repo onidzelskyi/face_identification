@@ -30,5 +30,5 @@ function flask()
     }
     xmlhttp.open("GET","http://192.168.1.8:5000/",true);
     xmlhttp.send();
-    document.getElementById("response").innerText="In porgress..";
+    document.getElementById("myImage").innerText="In porgress..";
 }

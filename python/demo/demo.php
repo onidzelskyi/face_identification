@@ -40,13 +40,11 @@
 <div style<='width:100%'>
 <center>
     <button type="button" onclick="flask()">Request data</button>
+    <img id="myImage"/>
 </center>
 </div>
 
-<div id='response'>
-</div>
 
-<img id="myImage"/>
 
 </body>
 </html>
