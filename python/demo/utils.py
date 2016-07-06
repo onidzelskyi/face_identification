@@ -89,6 +89,9 @@ class FaceRecognition(object):
     def process(self, group, single):
         try:
             """Main entry point"""
+            # Step I. Save processing data
+            pass
+
             # Step I. Init image objects
             self.group = ImageObj(group, name='group')
             self.single = ImageObj(single, name='single')
@@ -160,3 +163,6 @@ class FaceRecognition(object):
         self.group.image.save('test.jpg')
 
         #import pdb; pdb.set_trace()
+
+    def save_input_data(self):
+        pass

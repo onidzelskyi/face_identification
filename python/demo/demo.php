@@ -1,3 +1,8 @@
+<?php
+    session_start();
+    $_SESSION['var'] = 'test';
+?>
+
 <html>
 
 <head>
