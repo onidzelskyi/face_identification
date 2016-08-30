@@ -6,17 +6,20 @@ Identify a person from group of people
 Python 3.5
 
 ## install
+
+```bash
 sudo pip install virtualenvwrapper
 export WORKON_HOME=~/Envs
 source /opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin/virtualenvwrapper.sh
 mkvirtualenv -p python3.5 dev_face
 sudo pip3 install Flask
 sudo pip3 install -U flask-cors
+```
 
 ## Prerequisities
+
 ```bash
-sudo apt-get install python-pip
-sudo pip install numpy
+sudo apt-get install python-pip libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk python-matplotlib
 ```
 
 ## TODO
