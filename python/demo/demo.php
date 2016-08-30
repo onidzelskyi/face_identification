@@ -18,7 +18,7 @@
 
     <section>
     <div style="float:left; width:45%">
-        <form action="http://192.168.1.8:5000/?group" class="dropzone">
+        <form action="http://localhost:5000/?group" class="dropzone">
             <div class="fallback">
                 <input name="file" type="file" multiple />
             </div>
@@ -26,7 +26,7 @@
     </div>
 
     <div style="float:right; width:45%">
-        <form action="http://192.168.1.8:5000/?single" class="dropzone">
+        <form action="http://localhost:5000/?single" class="dropzone">
             <div class="fallback">
                 <input name="file" type="file" multiple />
             </div>
@@ -40,13 +40,11 @@
 <div style<='width:100%'>
 <center>
     <button type="button" onclick="flask()">Request data</button>
+    <div id="response_area"></div>
 </center>
 </div>
 
-<div id='response'>
-</div>
 
-<img id="myImage"/>
 
 </body>
 </html>
