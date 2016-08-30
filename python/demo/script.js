@@ -22,13 +22,13 @@ function flask()
             if(response) {
                 // UPDATE ajaxTest content
                 
-                document.getElementById("myImage").setAttribute('src', 'data:image/jpg;base64,'+ response);
-                document.getElementById("myImage").innerHTML = response;
+                //document.getElementById("response_area").setAttribute('src', 'data:image/png;base64,'+ response);
+                document.getElementById("response_area").innerHTML = response;
                 
                 
             }         }
     }
     xmlhttp.open("GET","http://localhost:5000/",true);
     xmlhttp.send();
-    document.getElementById("myImage").innerText="In porgress..";
+    //document.getElementById("myImage").innerText="In porgress..";
 }

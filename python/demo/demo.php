@@ -40,7 +40,7 @@
 <div style<='width:100%'>
 <center>
     <button type="button" onclick="flask()">Request data</button>
-    <img id="myImage"/>
+    <div id="response_area"></div>
 </center>
 </div>
 
