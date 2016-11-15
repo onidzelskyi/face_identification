@@ -1,0 +1,6 @@
+<!doctype html>
+{% if result%}
+  <img src='data:image/png;base64,{{ result }}'/>
+{% else %}
+  <h1>Sorry, something gone wrong!</h1>
+{% endif %}

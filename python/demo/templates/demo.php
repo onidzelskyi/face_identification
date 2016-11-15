@@ -1,10 +1,10 @@
 <html>
 
 <head>
-    <script src="dropzone.js"></script>
-    <script src="script.js"></script>
-    <link rel="stylesheet" href="dropzone.css">
-    <link rel="stylesheet" href="style.css?v=1438870295">
+    <script src="{{ url_for('static', filename='dropzone.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dropzone.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v=1438870295) }}">
 <title>Face Identification demo</title>
 </head>
 
