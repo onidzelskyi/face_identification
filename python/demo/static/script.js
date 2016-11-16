@@ -28,7 +28,7 @@ function flask()
                 
             }         }
     }
-    xmlhttp.open("GET","http://localhost:5000/todo", true);
+    xmlhttp.open("GET","todo", true);
     xmlhttp.send();
     //document.getElementById("myImage").innerText="In porgress..";
 }

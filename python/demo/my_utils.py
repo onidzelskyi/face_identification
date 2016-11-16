@@ -35,7 +35,7 @@ class ImageObj(object):
         # Image object
         path = './data/{}/{}'.format(session['token'], face_file)
         self.image = Image.open(path)
-        
+
         # Image as a matrix
         self.image_matrix = np.asarray(self.image.convert('L'))
         # Matrix of unrolled faces in vectors

@@ -90,7 +90,7 @@ def detect():
     # return resp
 
 
-@app.route("/", methods=['POST'])
+@app.route("/upload", methods=['POST'])
 def upload():
     global path
 
