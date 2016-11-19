@@ -64,27 +64,54 @@ class ImageObj(object):
     def get_original_faces(self):
         return self.original_faces
 
-    def get_result(self):
+    def get_result(self, width):
         io_buf = io.BytesIO()
-        self.image.save(io_buf, format='jpeg')
+        resized_image = self.image.resize(size=(int(width), int(width*self.image.size[1]/self.image.size[0])))
+        resized_image.save(io_buf, format='jpeg')
         return base64.b64encode(io_buf.getvalue())
 
     def debug_faces(self, mean_value):
+        def _calc_lbp_features(img):
+            from skimage.feature import local_binary_pattern
+
+            radius = 2
+            n_points = 8 * radius
+            METHOD = 'uniform'
+
+            return local_binary_pattern(img, n_points, radius, METHOD)
+
         self.faces_matrix = np.zeros(shape=(len(self.faces), int(mean_value ** 2)))
         for i in range(len(self.faces)):
             vertices = self.faces[i]['fdBoundingPoly']['vertices']
             box = (vertices[0]['x'], vertices[1]['y'], vertices[1]['x'], vertices[2]['y'],)
-            original_face = self.image.crop(box)
-            self.original_faces.append(base64.b64encode(original_face.tobytes()))#.encode('utf-8'))
-            #original_face.save('{}_face_{}.jpg'.format(self.image_name, i+1))
-            scaled_face = original_face.resize((int(mean_value), int(mean_value)))
-            #scaled_face.save('{}_scaled_face_{}.jpg'.format(self.image_name, i+1))
+
+            rotated_box = (vertices[0]['x'] - 50, vertices[1]['y'] - 50, vertices[1]['x'] + 50, vertices[2]['y'] + 50,)
+            original_face = self.image.crop(rotated_box)
+
+            rotated_face = original_face.rotate(self.faces[i]['rollAngle'])
+
+            cropped_face = rotated_face.crop((50, 50, box[2] - box[0] + 50, box[3] - box[1] + 50,))
+
+            scaled_face = cropped_face.resize((int(mean_value), int(mean_value)))
+
             converted_face = scaled_face.convert('L')
-            #converted_face.save(('{}_converted_face_{}.jpg'.format(self.image_name, i+1)))
-            rotated_face = converted_face.rotate(self.faces[i]['rollAngle'])
-            #rotated_face.save(('{}_aligned_face_{}.jpg'.format(self.image_name, i+1)))
-            #self.faces_matrix[i] = np.asmatrix(converted_face).A1
-            self.faces_matrix[i] = np.asmatrix(rotated_face).A1
+
+            if mean_value < 100:
+                converted_face = _calc_lbp_features(converted_face)
+
+            self.faces_matrix[i] = np.asmatrix(converted_face).A1
+
+            # original_face = self.image.crop(box)
+            # self.original_faces.append(base64.b64encode(original_face.tobytes()))#.encode('utf-8'))
+            # #original_face.save('{}_face_{}.jpg'.format(self.image_name, i+1))
+            # scaled_face = original_face.resize((int(mean_value), int(mean_value)))
+            # #scaled_face.save('{}_scaled_face_{}.jpg'.format(self.image_name, i+1))
+            # converted_face = scaled_face.convert('L')
+            # #converted_face.save(('{}_converted_face_{}.jpg'.format(self.image_name, i+1)))
+            # rotated_face = converted_face.rotate(self.faces[i]['rollAngle'])
+            # #rotated_face.save(('{}_aligned_face_{}.jpg'.format(self.image_name, i+1)))
+            # #self.faces_matrix[i] = np.asmatrix(converted_face).A1
+            # self.faces_matrix[i] = np.asmatrix(rotated_face).A1
 
 
 class FaceRecognition(object):
@@ -149,6 +176,16 @@ class FaceRecognition(object):
 
     def create_matrix(self):
         '''Transform faces to matrices.'''
+
+        def _calc_mean_value(L):
+            if np.min(L) < 100:
+                mean_value = int(np.min(L)/2.)
+            else:
+                mean_value = 100
+
+            print(L, mean_value)
+            return mean_value
+
         LL = []
         for image_object in [self.group, self.single]:
             #DD = []
@@ -162,7 +199,7 @@ class FaceRecognition(object):
         # TODO: one from mean, moda, mediana
         # mean_value = np.rint(np.average(LL))
         # Or use 100 by 100 image
-        mean_value = 100
+        mean_value = _calc_mean_value(LL)
 
         for image_object in [self.group, self.single]:
             image_object.debug_faces(mean_value)

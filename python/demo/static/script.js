@@ -28,7 +28,7 @@ function flask()
                 
             }         }
     }
-    xmlhttp.open("GET","todo", true);
+    xmlhttp.open("GET","detect?width=" + window.innerWidth, true);
     xmlhttp.send();
     //document.getElementById("myImage").innerText="In porgress..";
 }

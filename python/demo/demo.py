@@ -2,7 +2,7 @@
 import os
 import uuid
 import flask
-from flask import Flask, render_template, session
+from flask import Flask, render_template, session, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import UniqueConstraint
@@ -57,23 +57,29 @@ db.create_all()
 
 
 @app.route('/', methods=['GET'])
-def todo():
+def demo():
     return render_template('demo.php')
 
 
-@app.route('/todo', methods=['GET'])
+@app.route('/detect', methods=['GET'])
 def detect():
+    width = int(request.args.get('width', None)) * .8
+
+    result = ''
+
     fr = my_utils.FaceRecognition()
+
     fr.process('group.jpg', 'single.jpg', session)
 
     # Save result
     fr.save_images(session)
 
+    result = render_template('show_result.html',
+                       result=fr.group.get_result(width))
     # Close session
     session.pop('token', None)
 
-    return render_template('show_result.html',
-                           result=fr.group.get_result())
+    return result
     # return render_template('show_entries.html',
     #                        entries=fr.group.get_original_faces())
 
